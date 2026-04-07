@@ -1,0 +1,141 @@
+/* ═══════════════════════════════════════════════════════════════
+   DoodleCam — Animations & Keyframes
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Loading spinner ─── */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Pulse glow ─── */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 8px var(--primary-alpha); }
+  50% { box-shadow: 0 0 24px var(--primary-alpha), 0 0 48px var(--primary-alpha); }
+}
+
+/* ─── Red recording pulse ─── */
+@keyframes pulse-red {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ─── Panel slide in ─── */
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+/* ─── Tooltip appear ─── */
+@keyframes tooltip-in {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+/* ─── Dwell selection spin ─── */
+@keyframes dwell-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Float animation for toolbar ─── */
+@keyframes float {
+  0%, 100% { transform: translateY(-50%) translateX(0); }
+  50% { transform: translateY(-50%) translateX(3px); }
+}
+
+/* ─── Capture flash ─── */
+@keyframes capture-flash {
+  0% { opacity: 0; }
+  20% { opacity: 0.8; }
+  100% { opacity: 0; }
+}
+
+.capture-flash {
+  position: fixed;
+  inset: 0;
+  background: white;
+  z-index: 9000;
+  pointer-events: none;
+  animation: capture-flash 0.4s ease-out forwards;
+}
+
+/* ─── Particle burst ─── */
+@keyframes particle-float {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--px), var(--py)) scale(0);
+    opacity: 0;
+  }
+}
+
+.particle {
+  position: fixed;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+  pointer-events: none;
+  z-index: 9000;
+  animation: particle-float 0.8s ease-out forwards;
+}
+
+/* ─── Neon text glow ─── */
+@keyframes neon-flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+    text-shadow:
+      0 0 4px var(--primary),
+      0 0 11px var(--primary),
+      0 0 19px var(--primary);
+  }
+  20%, 24%, 55% {
+    text-shadow: none;
+  }
+}
+
+/* ─── Landmark dot pulse ─── */
+@keyframes dot-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.5;
+  }
+}
+
+/* ─── Gesture indicator fade ─── */
+@keyframes gesture-fade {
+  from { opacity: 0.7; }
+  to { opacity: 0; }
+}
+
+/* ─── Shake animation for errors ─── */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+/* ─── Scale bounce for selections ─── */
+@keyframes bounce-in {
+  0% { transform: scale(0.5); opacity: 0; }
+  70% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}

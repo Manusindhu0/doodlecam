@@ -1,0 +1,26 @@
+appId: com.doodlecam.app
+productName: DoodleCam
+copyright: Copyright © 2026 DoodleCam
+
+directories:
+  output: dist
+  buildResources: build
+
+files:
+  - "**/*"
+  - "!dist/**"
+  - "!node_modules/.cache/**"
+
+forceCodeSigning: false
+
+win:
+  target:
+    - target: portable
+      arch:
+        - x64
+  icon: src/assets/icons/icon.png
+  signAndEditExecutable: false
+  rfc3161TimeStampServer: ""
+
+portable:
+  artifactName: DoodleCam-${version}-Portable.exe

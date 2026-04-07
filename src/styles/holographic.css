@@ -1,0 +1,380 @@
+/* ═══════════════════════════════════════════════════════════════
+   DoodleCam — Holographic UI Toolbar
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Main Toolbar ─── */
+.holo-toolbar {
+  position: fixed;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 4000;
+  pointer-events: all;
+}
+
+.holo-toolbar-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 6px;
+  background: var(--toolbar-bg);
+  backdrop-filter: blur(30px) saturate(1.4);
+  -webkit-backdrop-filter: blur(30px) saturate(1.4);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  box-shadow:
+    0 0 40px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* ─── Tool Groups ─── */
+.tool-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 0;
+}
+
+.tool-separator {
+  width: 70%;
+  height: 1px;
+  margin: 4px auto;
+  background: var(--border);
+}
+
+/* ─── Tool Button ─── */
+.tool-btn {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  outline: none;
+}
+
+.tool-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.tool-btn:hover {
+  background: var(--glass-bg);
+  color: var(--text);
+  border-color: var(--glass-border);
+  transform: scale(1.1);
+}
+
+.tool-btn.active {
+  background: var(--primary-alpha);
+  color: var(--primary);
+  border-color: var(--primary);
+  box-shadow: 0 0 12px var(--primary-alpha);
+}
+
+.tool-btn.active:hover {
+  transform: scale(1.1);
+}
+
+/* Hover indicator from gesture */
+.tool-btn.gesture-hover {
+  background: var(--accent-alpha);
+  color: var(--accent);
+  border-color: var(--accent);
+  transform: scale(1.15);
+  box-shadow: 0 0 16px var(--accent-alpha);
+}
+
+/* Dwell progress ring */
+.tool-btn.gesture-hover::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: var(--radius-md);
+  border: 2px solid transparent;
+  border-top-color: var(--accent);
+  animation: dwell-spin 0.6s linear;
+}
+
+/* Danger button (Clear All) */
+.tool-btn.danger-btn:hover {
+  background: rgba(255, 68, 68, 0.15);
+  color: var(--danger);
+  border-color: rgba(255, 68, 68, 0.3);
+}
+
+/* Capture button */
+.tool-btn.capture-btn:hover {
+  background: rgba(0, 245, 212, 0.1);
+  color: var(--primary);
+}
+
+/* Record button */
+.tool-btn.record-btn.recording {
+  background: rgba(255, 68, 68, 0.2);
+  color: var(--danger);
+  border-color: var(--danger);
+  animation: pulse-red 1.5s ease-in-out infinite;
+}
+
+/* Color preview circle */
+.color-preview {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: all var(--transition-fast);
+}
+
+.tool-btn:hover .color-preview {
+  transform: scale(1.1);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Size preview */
+.size-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.size-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  transition: all var(--transition-fast);
+}
+
+.tool-btn:hover .size-dot,
+.tool-btn.active .size-dot {
+  background: var(--primary);
+}
+
+/* ─── Tooltip ─── */
+.tool-btn[data-tooltip]:hover::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--surface-solid);
+  color: var(--text);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  z-index: 5000;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border);
+  pointer-events: none;
+  animation: tooltip-in 0.2s ease;
+}
+
+/* ─── Sub-Panels ─── */
+.sub-panel {
+  position: fixed;
+  left: 80px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--toolbar-bg);
+  backdrop-filter: blur(30px) saturate(1.4);
+  -webkit-backdrop-filter: blur(30px) saturate(1.4);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  min-width: 180px;
+  z-index: 3500;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
+  animation: panel-in 0.25s ease;
+}
+
+.sub-panel-title {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: var(--space-sm);
+  padding-bottom: var(--space-xs);
+  border-bottom: 1px solid var(--border);
+}
+
+/* ─── Sub-Panel Grids ─── */
+.sub-panel-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.shape-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: 0.65rem;
+}
+
+.shape-btn svg {
+  width: 32px;
+  height: 32px;
+}
+
+.shape-btn:hover {
+  background: var(--glass-bg);
+  color: var(--text);
+  border-color: var(--glass-border);
+}
+
+.shape-btn.active {
+  background: var(--primary-alpha);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+/* Color Palette */
+.color-palette {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.color-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.color-swatch:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
+}
+
+.color-swatch.active {
+  border-color: var(--text);
+  transform: scale(1.15);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
+}
+
+/* Size Options */
+.size-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.size-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: 0.8rem;
+}
+
+.size-btn:hover {
+  background: var(--glass-bg);
+  color: var(--text);
+}
+
+.size-btn.active {
+  background: var(--primary-alpha);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.size-circle {
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+/* Filter Grid */
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.filter-btn {
+  padding: 10px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.filter-btn:hover {
+  background: var(--glass-bg);
+  color: var(--text);
+  border-color: var(--glass-border);
+}
+
+.filter-btn.active {
+  background: var(--primary-alpha);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+/* Sticker Grid */
+.sticker-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.sticker-btn {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.sticker-btn:hover {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  transform: scale(1.15);
+}
+
+.sticker-btn.active {
+  background: var(--primary-alpha);
+  border-color: var(--primary);
+  transform: scale(1.1);
+}

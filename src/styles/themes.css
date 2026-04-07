@@ -1,0 +1,69 @@
+/* ═══════════════════════════════════════════════════════════════
+   DoodleCam — Theme Definitions
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Dark Neon Theme (Default) ─── */
+[data-theme="dark-neon"] {
+  --bg: #0a0a1a;
+  --surface: rgba(26, 26, 50, 0.85);
+  --surface-solid: #1a1a32;
+  --primary: #00f5d4;
+  --primary-alpha: rgba(0, 245, 212, 0.3);
+  --secondary: #f72585;
+  --secondary-alpha: rgba(247, 37, 133, 0.3);
+  --accent: #7b2ff7;
+  --accent-alpha: rgba(123, 47, 247, 0.3);
+  --warning: #fee440;
+  --danger: #ff4444;
+  --text: #e8e8ff;
+  --text-dim: rgba(232, 232, 255, 0.5);
+  --border: rgba(255, 255, 255, 0.08);
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --toolbar-bg: rgba(10, 10, 30, 0.75);
+  --glow-color: rgba(0, 245, 212, 0.4);
+}
+
+/* ─── Playful Bright Theme ─── */
+[data-theme="playful"] {
+  --bg: #fef9ff;
+  --surface: rgba(255, 255, 255, 0.9);
+  --surface-solid: #ffffff;
+  --primary: #ff6b6b;
+  --primary-alpha: rgba(255, 107, 107, 0.3);
+  --secondary: #4ecdc4;
+  --secondary-alpha: rgba(78, 205, 196, 0.3);
+  --accent: #ffe66d;
+  --accent-alpha: rgba(255, 230, 109, 0.3);
+  --warning: #ffa502;
+  --danger: #ee5a24;
+  --text: #2d3436;
+  --text-dim: rgba(45, 52, 54, 0.5);
+  --border: rgba(0, 0, 0, 0.08);
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --toolbar-bg: rgba(255, 255, 255, 0.8);
+  --glow-color: rgba(255, 107, 107, 0.3);
+}
+
+/* ─── Cyberpunk Theme ─── */
+[data-theme="cyberpunk"] {
+  --bg: #0d0221;
+  --surface: rgba(20, 5, 50, 0.85);
+  --surface-solid: #140532;
+  --primary: #ff003c;
+  --primary-alpha: rgba(255, 0, 60, 0.3);
+  --secondary: #00fff5;
+  --secondary-alpha: rgba(0, 255, 245, 0.3);
+  --accent: #ff9100;
+  --accent-alpha: rgba(255, 145, 0, 0.3);
+  --warning: #ffea00;
+  --danger: #ff003c;
+  --text: #f0e6ff;
+  --text-dim: rgba(240, 230, 255, 0.5);
+  --border: rgba(255, 255, 255, 0.06);
+  --glass-bg: rgba(255, 0, 60, 0.03);
+  --glass-border: rgba(255, 0, 60, 0.1);
+  --toolbar-bg: rgba(13, 2, 33, 0.8);
+  --glow-color: rgba(255, 0, 60, 0.4);
+}
