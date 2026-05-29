@@ -84,13 +84,20 @@ class DoodleCamApp {
       this.updateLoading('Camera ready!', 30);
 
       // Init hand tracker (loads AI models — takes the longest)
+      // Failure is non-fatal: the app works in mouse-only mode if CDN is unavailable.
       console.log('[App] Starting hand tracker init...');
-      await this.handTracker.init((status) => {
-        console.log('[App] HandTracker progress:', status);
-        this.updateLoading(status, 30 + Math.min(50, this.loadProgress + 10));
-      });
-      console.log('[App] Hand tracker ready!');
-      this.updateLoading('AI models loaded!', 85);
+      try {
+        await this.handTracker.init((status) => {
+          console.log('[App] HandTracker progress:', status);
+          this.updateLoading(status, 30 + Math.min(50, this.loadProgress + 10));
+        });
+        console.log('[App] Hand tracker ready!');
+        this.updateLoading('AI models loaded!', 85);
+      } catch (trackerErr) {
+        console.warn('[App] ⚠️ Hand tracker failed — running in mouse-only mode:', trackerErr.message);
+        this.updateLoading('Mouse mode (gesture tracking unavailable)', 85);
+        this._gestureDisabled = true;
+      }
 
       // Init UI
       console.log('[App] Initializing UI...');
@@ -114,6 +121,13 @@ class DoodleCamApp {
         app.classList.remove('hidden');
 
         setTimeout(() => loadingScreen.remove(), 600);
+
+        // If gesture tracking failed, tell the user
+        if (this._gestureDisabled) {
+          setTimeout(() => {
+            this.showToast('🖱️ Mouse mode — hand gestures unavailable (check internet)');
+          }, 800);
+        }
       }, 300);
 
       // Start main loop
@@ -127,8 +141,11 @@ class DoodleCamApp {
       const statusEl = document.getElementById('loading-status');
       if (statusEl) {
         statusEl.style.color = '#ff4444';
-        statusEl.textContent = `❌ ${err.message}`;
+        statusEl.textContent = `❌ ${err.message}. Please refresh the page to retry.`;
       }
+      // Show a retry hint below the error
+      const barEl = document.getElementById('loading-bar-fill');
+      if (barEl) barEl.style.background = '#ff4444';
     }
   }
 
@@ -168,11 +185,15 @@ class DoodleCamApp {
     // 3. Process primary hand gesture
     this._processGesture(gestureResult);
 
-    // 4. Handle second hand UI interaction
+    // 4. Handle second hand UI interaction (convert canvas → viewport before hover check)
     if (gestureResult.hands.length > 1) {
       const secondHand = gestureResult.hands[1];
       if (secondHand.fingerTips) {
-        this.holoUI.handleGestureHover(secondHand.fingerTips[1]);
+        const vpPos = this._canvasToViewport(
+          secondHand.fingerTips[1].x,
+          secondHand.fingerTips[1].y
+        );
+        this.holoUI.handleGestureHover(vpPos);
       }
     }
 
@@ -195,8 +216,30 @@ class DoodleCamApp {
       return;
     }
 
-    const gesture = primary.gesture;
+    let gesture = primary.gesture;
     const pos = primary.position;
+
+    // ── UI-bounds override ──────────────────────────────────────────
+    // Convert the canvas-space finger position to viewport space and
+    // check if it is above the holographic toolbar / any open panel.
+    // If it is, reclassify the gesture as UI_HOVER so we never draw
+    // doodles behind the toolbar.
+    if (gesture === GestureType.DRAW && pos) {
+      const vpPos = this._canvasToViewport(pos.x, pos.y);
+      const uiBounds = this.holoUI.getUIBounds();
+      const overUI = uiBounds.some(({ rect: r }) =>
+        vpPos.x >= r.left && vpPos.x <= r.right &&
+        vpPos.y >= r.top  && vpPos.y <= r.bottom
+      );
+      if (overUI) {
+        gesture = GestureType.UI_HOVER;
+        this.holoUI.handleGestureHover(vpPos);
+        this._endCurrentAction();
+        this.prevGestureType = gesture;
+        return;
+      }
+    }
+    // ───────────────────────────────────────────────────────────────
 
     switch (gesture) {
       case GestureType.DRAW:
@@ -248,7 +291,8 @@ class DoodleCamApp {
 
       case GestureType.UI_HOVER:
         if (pos) {
-          this.holoUI.handleGestureHover(pos);
+          const vpPos = this._canvasToViewport(pos.x, pos.y);
+          this.holoUI.handleGestureHover(vpPos);
         }
         this._endCurrentAction();
         break;
@@ -519,16 +563,12 @@ class DoodleCamApp {
     const canvas = this.feedbackCanvas;
     let mouseDown = false;
 
+    // Use the aspect-ratio-aware converter so drawing aligns with
+    // the cursor at any window size (object-fit:contain adds letterboxes).
     const getCanvasPos = (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = this.canvasWidth / rect.width;
-      const scaleY = this.canvasHeight / rect.height;
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      return {
-        x: (clientX - rect.left) * scaleX,
-        y: (clientY - rect.top) * scaleY
-      };
+      return this._viewportToCanvas(clientX, clientY);
     };
 
     canvas.addEventListener('mousedown', (e) => {
@@ -670,11 +710,80 @@ class DoodleCamApp {
   // ─── Resize ───
 
   _handleResize() {
-    // Canvas maintains video aspect ratio, fills the container
-    const container = document.getElementById('canvas-container');
-    if (!container) return;
-    // Canvas size stays fixed to video resolution
-    // CSS handles scaling to fill viewport
+    // Invalidate the cached canvas rect on every resize so that the
+    // coordinate-mapping helpers recompute it on the next frame.
+    this._cachedCanvasRect = null;
+  }
+
+  // ─── Coordinate Mapping Helpers ──────────────────────────────────
+  // The canvas is rendered inside a container using CSS object-fit:contain.
+  // This means there can be letterbox/pillarbox areas where the canvas
+  // is not drawn.  All three methods below account for that scaling.
+
+  /**
+   * Return the actual rendered bounding rectangle of the canvas drawing
+   * buffer inside the browser window.
+   *
+   * A <canvas> with CSS width:100%;height:100% is stretched by the browser
+   * to fill its CSS box, but the drawing buffer (1280×720) is scaled
+   * uniformly to fit inside that CSS box, leaving letterbox/pillarbox bars.
+   * We reproduce that scaling here so coordinates map correctly.
+   * Result is cached and invalidated on every window resize.
+   */
+  _getCanvasRect() {
+    if (this._cachedCanvasRect) return this._cachedCanvasRect;
+
+    const el = this.feedbackCanvas;
+    const elRect = el.getBoundingClientRect(); // actual CSS box in the viewport
+    const elW = elRect.width;
+    const elH = elRect.height;
+
+    // Intrinsic drawing-buffer resolution
+    const cvW = this.canvasWidth;   // e.g. 1280
+    const cvH = this.canvasHeight;  // e.g.  720
+
+    // The browser scales the drawing buffer to fit the CSS box while
+    // preserving aspect ratio (same behaviour as object-fit:contain).
+    const scaleX = elW / cvW;
+    const scaleY = elH / cvH;
+    const scale  = Math.min(scaleX, scaleY);
+
+    const renderedW = cvW * scale;
+    const renderedH = cvH * scale;
+
+    // The scaled content is centred in the CSS box
+    const offsetX = elRect.left + (elW - renderedW) / 2;
+    const offsetY = elRect.top  + (elH - renderedH) / 2;
+
+    this._cachedCanvasRect = { offsetX, offsetY, renderedW, renderedH, scale };
+    return this._cachedCanvasRect;
+  }
+
+  _cachedCanvasRect = null;
+
+  /**
+   * Convert a viewport (client) coordinate to canvas pixel coordinate.
+   * Use this when mapping mouse / touch events onto the canvas.
+   */
+  _viewportToCanvas(clientX, clientY) {
+    const { offsetX, offsetY, scale } = this._getCanvasRect();
+    return {
+      x: (clientX - offsetX) / scale,
+      y: (clientY - offsetY) / scale
+    };
+  }
+
+  /**
+   * Convert a canvas pixel coordinate to a viewport (client) coordinate.
+   * Use this when checking whether a canvas-space hand landmark is above
+   * a DOM element (e.g. the holographic toolbar).
+   */
+  _canvasToViewport(canvasX, canvasY) {
+    const { offsetX, offsetY, scale } = this._getCanvasRect();
+    return {
+      x: canvasX * scale + offsetX,
+      y: canvasY * scale + offsetY
+    };
   }
 
   // ─── Toast Notification ───

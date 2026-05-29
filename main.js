@@ -1,12 +1,23 @@
 const { app, BrowserWindow, ipcMain, dialog, nativeImage, session, systemPreferences } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 
-// Enable real camera access — permissions handled via session handler below
-// NOTE: do NOT use 'use-fake-device-for-media-stream' (causes green screen)
-// NOTE: do NOT use 'use-fake-ui-for-media-stream' (can block real Windows camera prompt)
-app.commandLine.appendSwitch('disable-software-rasterizer');
-app.commandLine.appendSwitch('enable-features', 'WebRTCPipeWireCapturer');
+// ─── Fix: GPU cache & user-data outside OneDrive ──────────────────
+// When the project lives in an OneDrive-synced folder, Electron's GPU
+// shader disk-cache gets "Access is denied" errors (OneDrive locks the
+// files while syncing).  Redirect everything to a proper local temp dir.
+const CACHE_DIR = path.join(os.tmpdir(), 'DoodleCam-cache');
+if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR, { recursive: true });
+app.setPath('userData', CACHE_DIR);
+
+// Disable GPU shader disk-cache entirely (fastest fix, safe for this app)
+app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
+
+// WebRTCPipeWireCapturer is Linux-only — skip it on Windows to avoid overhead
+if (process.platform !== 'win32') {
+  app.commandLine.appendSwitch('enable-features', 'WebRTCPipeWireCapturer');
+}
 
 let mainWindow;
 

@@ -15,12 +15,23 @@ forceCodeSigning: false
 
 win:
   target:
+    - target: nsis
+      arch:
+        - x64
     - target: portable
       arch:
         - x64
   icon: src/assets/icons/icon.png
   signAndEditExecutable: false
   rfc3161TimeStampServer: ""
+
+nsis:
+  oneClick: true
+  allowToChangeInstallationDirectory: false
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: DoodleCam
+  artifactName: DoodleCam-Setup-${version}.exe
 
 portable:
   artifactName: DoodleCam-${version}-Portable.exe

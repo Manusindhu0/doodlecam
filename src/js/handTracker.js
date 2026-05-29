@@ -17,12 +17,27 @@ export class HandTracker {
   }
 
   async init(onProgress) {
+    // Wrap the entire loading sequence in a 20-second timeout.
+    // If the CDN is unreachable or very slow the app would otherwise
+    // hang on the loading screen forever.
+    const timeoutMs = 20000;
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(
+        `Hand tracking models timed out after ${timeoutMs / 1000}s. ` +
+        `Check your internet connection (models load from CDN).`
+      )), timeoutMs)
+    );
+
+    await Promise.race([this._loadModels(onProgress), timeoutPromise]);
+  }
+
+  async _loadModels(onProgress) {
     try {
       if (onProgress) onProgress('Loading AI vision models...');
       console.log('[HandTracker] Loading FilesetResolver...');
 
       const vision = await FilesetResolver.forVisionTasks(
-        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.18/wasm'
+        './lib/mediapipe/wasm'
       );
 
       console.log('[HandTracker] FilesetResolver loaded, creating HandLandmarker...');
@@ -31,7 +46,7 @@ export class HandTracker {
       // Create Hand Landmarker (required — this is the core feature)
       this.handLandmarker = await HandLandmarker.createFromOptions(vision, {
         baseOptions: {
-          modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task',
+          modelAssetPath: './assets/models/hand_landmarker.task',
           delegate: 'CPU'
         },
         numHands: 2,
@@ -59,7 +74,7 @@ export class HandTracker {
       console.log('[HandTracker] Loading FaceLandmarker in background...');
       this.faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
         baseOptions: {
-          modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task',
+          modelAssetPath: './assets/models/face_landmarker.task',
           delegate: 'CPU'
         },
         numFaces: 1,
